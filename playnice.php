@@ -2,24 +2,28 @@
 
 //
 // A little script to scrape your iPhone's location from MobileMe
-// and update Google Latitude with your iPhone's current position.
+// and update Brightkite with your iPhone's current position.
 //
-// Uses sosumi from http://github.com/tylerhall/sosumi/tree/master and
-// some google scraping code from Jack Catchpoole <jack@catchpoole.com>.
+// Uses sosumi from http://github.com/tylerhall/sosumi/tree/master.
 //
+// Martin May <martin@martinmay.net>
 // Nat Friedman <nat@nat.org>
 //
-// August 22nd, 2009
+// August 5th, 2009
 //
 // MIT license.
 //
 
-include 'class.google.php';
+include 'class.brightkite.php';
 include 'class.sosumi.php';
 
 $mobileMePasswordFile = "./mobile-me-password.txt";
 
-$google = new iGoogle();
+$bk = new Brightkite();
+if (!$bk->credentials_set())
+{
+  die("Please set your Brightkite username and password in class.brightkite.php before using this script.\n");
+}
 
 function promptForLogin($serviceName)
 {
@@ -66,32 +70,17 @@ if (! file_exists ($mobileMePasswordFile)) {
     @include($mobileMePasswordFile);
 }
 
-if (! $google->haveCookie()) {
-    echo "No Google cookie found. You will need to authenticate with your\n";
-    echo "Google username/password. You should only need to do this once;\n";
-    echo "we will save the session cookie for the future.\n\n";
-    echo "Please note that you need to have the Latitude widget on your main\n";
-    echo "iGoogle page for this to work.\n\n";
-
-    list($username, $password) = promptForLogin("Google");
-
-    echo "Acquiring Google session cookie...";
-    $google->login($username, $password);
-    echo "got it.\n";
-}
-
 // Get the iPhone location from MobileMe
 echo "Fetching iPhone location...";
 $mobileMe = new Sosumi ($mobileMeUsername, $mobileMePassword);
 $iphoneLocation = $mobileMe->locate();
 echo "got it.\n";
 
-echo "iPhone location: $iphoneLocation->latitude, $iphoneLocation->longitude\n";
+echo "iPhone location: $iphoneLocation->latitude, $iphoneLocation->longitude (accuracy: $iphoneLocation->accuracy meters)\n";
 
-// Now update Google Latitude
-echo "Updating Google Latitude...";
-$google->updateLatitude($iphoneLocation->latitude, $iphoneLocation->longitude,
-			$iphoneLocation->accuracy);
+// Now update Brightkite
+echo "Updating Brightkite...";
+$bk->updateBrightkite($iphoneLocation->latitude, $iphoneLocation->longitude, $iphoneLocation->accuracy);
 
 // All done.
 echo "Done!\n";
